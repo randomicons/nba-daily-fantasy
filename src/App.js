@@ -1,30 +1,62 @@
 import { FlatGrid } from 'react-native-super-grid';
 import React, { Component } from 'react';
-import { StyleSheet, TouchableHighlight, Text, View } from 'react-native';
-import { COLOR_PRIMARY } from './styles/MainStyles';
+import { TouchableHighlight, Text, View } from 'react-native';
 import PlayerCard from './components/PlayerCard'
 import Player from './components/Player';
+import { Bar } from 'react-native-progress';
+import EStyleSheet from 'react-native-extended-stylesheet';
+
 
 type Props = {};
 export default class App extends Component<Props> {
   constructor(props) {
     super(props)
+    this.INIT_MONEY = 200
     this.state = {
-      selected: -1,
       currentTab: "PG",
-      pointGuard: -1,
-      center: -2,
-      smallForward: -3,
-      powerForward: -4,
-      shootingGuard: -5
+      PG: -1,
+      C: -2,
+      SF: -3,
+      PF: -4,
+      SG: -5,
+      selected: new Set(),
+      moneyLeft: this.INIT_MONEY,
     }
 
-    this.tabNames = { PG: "PG", center: "C", smallForward: "SF", powerForward: "PF", shootingGuard: "SG" }
+    this.tabNames = ["PG", "SF", "PF", "SG", "C"]
   }
 
-  setSelected = (playerCard) => {
-    console.log(playerCard)
-    this.setState({ selected: playerCard })
+  setSelected = (playerId, playerCost) => {
+    if (this.state.selected.has(playerId)) {
+      console.log(this.state.selected)
+      this.removeSelected(playerId, playerCost)
+    }
+    else {
+      const curPlayerId = this.state[this.state.currentTab]
+      this.state.selected.delete(curPlayerId)
+      this.state.selected.add(playerId)
+      console.log(curPlayerId)
+      newState = {
+        moneyLeft: this.state.moneyLeft - playerCost + (curPlayerId > 0 ? 50 : 0),
+        selected: new Set(this.state.selected)
+      }
+      console.log(newState.moneyLeft)
+      // Move to the next tab if its not set
+      const idx = ((this.tabNames).findIndex((i) => i === this.state.currentTab) + 1) % this.tabNames.length
+      if (this.state[this.tabNames[idx]] < 0)
+        newState.currentTab = this.tabNames[idx]
+      newState[this.state.currentTab] = playerId
+
+      this.setState(newState)
+
+    }
+  }
+
+  removeSelected = (playerId, playerCost) => {
+    this.state.selected.delete(playerId)
+    newState = { moneyLeft: this.state.moneyLeft + playerCost, selected: new Set(this.state.selected) }
+    newState[this.state.currentTab] = -1
+    this.setState(newState)
   }
 
   _onPressTab = (tabId) => {
@@ -33,57 +65,48 @@ export default class App extends Component<Props> {
 
   render() {
     let ids = [201935, 201936, 201937, 201938, 201939, 201941, 201942]
-    const items = Array(7).fill(ids[Object.values(this.tabNames).findIndex(
+    const items = Array(13).fill(ids[(this.tabNames).findIndex(
       (i) => i === this.state.currentTab)])
-
     let tabContent =
       <FlatGrid
         itemDimension={100}
         items={items}
         renderItem={({ item }) => (
           <PlayerCard setSelected={this.setSelected}
-            selected={this.state.selected === item} cost={0} avg={1} id={item} />)}
+            selected={this.state.selected.has(item)} clickable={this.state.moneyLeft >= 50} cost={50} avg={1} id={item} />)}
       />
     return (
-      <View>
+      <View style={styles.container}>
         <FlatGrid
           itemDimension={60}
-          items={Object.values(this.tabNames)}
+          items={(this.tabNames)}
           renderItem={({ item }) => (
             <TouchableHighlight style={styles.tab} onPress={this._onPressTab.bind(this, item)}>
               <View>
-                {this.state.selected != -1 && <Player id={this.state.selected} />}
+                <Player id={this.state[item]} style={{ width: 60, height: 60 }} />
                 <Text>
                   {item}
                 </Text>
               </View>
             </TouchableHighlight>)}
         />
+        <Text>${this.state.moneyLeft}/${this.INIT_MONEY}</Text>
+        <Bar width={350} progress={this.state.moneyLeft / this.INIT_MONEY} />
         {tabContent}
       </View>
-      // <View style={styles.container}>
-      //   <Player id={201935} />
-      //   <Player id={201935} />
-      //   <Player id={201935} />
-      //   <Player id={201935} />
-      //   <Player id={201935} />
-      //   <Player id={201935} />
-      // </View>
     );
   }
 }
 
-styles = StyleSheet.create({
+styles = EStyleSheet.create({
   container: {
-    flex: 1,
-    flexDirection: 'column',
     backgroundColor: '#F5FCFF',
-    justifyContent: 'center',
     alignItems: 'center',
+    flex: 1,
   },
   tab: {
     borderRadius: 15,
-    backgroundColor: COLOR_PRIMARY,
+    backgroundColor: '$color_primary',
     justifyContent: 'center',
     alignItems: 'center',
   }

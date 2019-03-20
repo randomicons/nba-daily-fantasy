@@ -1,40 +1,37 @@
-import * as DefaultStyle from "../styles/MainStyles"
 import React, { Component } from 'react'
 import { View, Text, TouchableHighlight } from 'react-native'
 import Player from "./Player"
+import est from 'react-native-extended-stylesheet'
 
 
 export default class PlayerCard extends Component {
     constructor(props) {
         super(props)
-        this._onPress = this._onPress.bind(this)
     }
 
-    _onPress() {
-        console.log(this.props.selected)
-        if (this.props.selected) {
-            this.props.setSelected(null)
-        } else {
-            this.props.setSelected(this.props.id)
-        }
-
+    _onPress = () => {
+        if (this.props.clickable)
+            this.props.setSelected(this.props.id, this.props.cost)
     }
 
     render() {
-        const styles = {
-            backgroundColor: (this.props.selected ? DefaultStyle.COLOR_SECONDARY : DefaultStyle.COLOR_SELECTED),
-            justifyContent: "center",
-            alignItems: "center",
-            borderRadius: DefaultStyle.BORDER_RADIUS
-        }
+        const styles = est.create({
+            main: {
+                backgroundColor: (this.props.selected ? '$color_secondary' : '$color_selected'),
+                justifyContent: "center",
+                alignItems: "center",
+                borderRadius: '$border_radius',
+                opacity: (this.props.selected || this.props.clickable) ? 1 : .5
+            }
+        })
         return (
-            < TouchableHighlight onPress={this._onPress}>
-                <View style={styles}>
-                    <Player id={this.props.id} />
+            < TouchableHighlight onPress={this._onPress} >
+                <View style={styles.main}>
+                    <Player id={this.props.id} style={{ width: 100, height: 100 }} />
                     <Text>Cost: {this.props.cost}</Text>
                     <Text>Avg Points: {this.props.avg}</Text>
                 </View>
-            </TouchableHighlight>
+            </TouchableHighlight >
         )
     }
 }
